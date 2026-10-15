@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/SolutionItems/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/Tests/">
     <Project Path="PA.CacheAside.Core.Tests/PA.CacheAside.Core.Tests.csproj" Id="520f7eec-93b3-41ec-b926-8a8e7d798c27" />
     <Project Path="PA.CacheAside.Tests/PA.CacheAside.Tests.csproj" Id="431c7c56-4d9e-4d2d-8fcf-9cf6a99857ac" />
