@@ -5,6 +5,8 @@
 		<LangVersion>latest</LangVersion>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -12,11 +14,18 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\PA.CacheAside.Core\PA.CacheAside.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<None Include="..\PA.CacheAside.Core\bin\$(Configuration)\$(TargetFramework)\PA.CacheAside.Core.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
 	</ItemGroup>
 
 </Project>
