@@ -8,5 +8,6 @@
   </Folder>
   <Project Path="PA.CacheAside.Console/PA.CacheAside.Console.csproj" />
   <Project Path="PA.CacheAside.Core/PA.CacheAside.Core.csproj" />
+  <Project Path="PA.CacheAside.NuggetDemo/PA.CacheAside.NuggetDemo.csproj" Id="036a66ea-6b35-4719-aebe-0f50476bbf2e" />
   <Project Path="PA.CacheAside/PA.CacheAside.csproj" />
 </Solution>

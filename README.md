@@ -4,6 +4,9 @@
 
 PA.CacheAside is a small cache-aside helper for .NET that uses a Roslyn source generator to create cached decorators for your interfaces.
 
+![NuGet Version](https://img.shields.io/nuget/v/PA.CacheAside)
+
+
 Instead of hand-writing wrapper classes for every query service or repository, you mark an interface with an attribute and let the generator create:
 
 - a cached implementation of the interface
