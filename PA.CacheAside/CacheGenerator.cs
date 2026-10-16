@@ -123,6 +123,8 @@ public class CacheGenerator : IIncrementalGenerator
         var ignore = IgnoreMethod(methodDef);
         var tagsString = GetTagsString();
         var timeoutInMinutes = GetTimeOutInMinutes();
+        var localTimeoutInMinutes = GetLocalTimeOutInMinutes();
+        var flags = GetFlags();
         var hasResult = methodDef.HasResult();
         var methodName = methodDef.Name;
         var parametersCall = methodDef.GetParametersCall();
@@ -162,6 +164,7 @@ public class CacheGenerator : IIncrementalGenerator
             key: cacheKey,
             factory: async _ => await source.{methodName}({parametersCall}),
             cancellationToken: {cancellationTokenParameterName},
+            options: {GetEntryOptions()},
             tags: [{tagsString}]);";
 
         string GetCacheSyncBody() => $@"
@@ -171,7 +174,18 @@ public class CacheGenerator : IIncrementalGenerator
             key: cacheKey,
             factory: _ => ValueTask.FromResult(source.{methodName}({parametersCall})),
             cancellationToken: {TypeNameConstants.CancelationTokenNoneValue},
+            options: {GetEntryOptions()},
             tags: [{tagsString}]).Result;";
+
+        string GetEntryOptions() =>
+            $@"new {TypeNameConstants.HybridCacheEntryOptionsType}
+            {{
+                Expiration = {GetTimeSpanString(timeoutInMinutes)},
+                LocalCacheExpiration = {GetTimeSpanString(localTimeoutInMinutes)},
+                Flags = {(flags.HasValue ?  $"({TypeNameConstants.HybridCacheEntryFlagsType}){flags}" : "null")}
+            }}";
+
+        string GetTimeSpanString(int? minutes) => minutes.HasValue ? $"TimeSpan.FromMinutes({minutes.Value})" : "null";
 
         string GetTagsString() 
         {
@@ -182,6 +196,10 @@ public class CacheGenerator : IIncrementalGenerator
 
         int? GetTimeOutInMinutes() => methodDef
             .GetAttributeFirstValue<int?>(TypeNameConstants.CacheTimeoutAttribute);
+        int? GetLocalTimeOutInMinutes() => methodDef
+            .GetAttributeFirstValue<int?>(TypeNameConstants.CacheLocalTimeoutAttribute);
+        int? GetFlags() => methodDef
+            .GetAttributeFirstValue<int?>(TypeNameConstants.CacheFlagsAttribute);
     }
 
     private static ClassMethodWriter CreateClassInvalidatorMethodWriter(MethodDef methodDef, InterfaceDef interfaceDef)

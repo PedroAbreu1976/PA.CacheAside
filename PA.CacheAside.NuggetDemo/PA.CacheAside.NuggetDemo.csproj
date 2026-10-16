@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PA.CacheAside" Version="1.*" />
+    <PackageReference Include="PA.CacheAside" Version="1.0.3" />
 	  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.*" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.*" />
   </ItemGroup>

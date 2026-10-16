@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Demo = PA.CacheAside.Demo;
+using System.Security.Cryptography.X509Certificates;
 
 var builder = Host.CreateDefaultBuilder();
 
@@ -66,6 +67,9 @@ namespace PA.CacheAside.Demo
     public interface IRepository
     {
         [CacheTag("TEST")]
+        [CacheTimeout(120)]
+        [CacheLocalTimeout(10)]
+        [CacheFlags(HybridCacheEntryFlags.DisableDistributedCache)]
         Task<IEnumerable<string>> GetAllAsync(CancellationToken ct);
         Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token);
 

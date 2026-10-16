@@ -55,4 +55,13 @@ public static class ServiceCollectionExtensions
         }
         return services;
     }
+
+    public static IServiceCollection AddCacheAsideService<TService, TImplementation>(this IServiceCollection services)
+        where TService : class
+        where TImplementation : class, TService, ICacheInvalidator
+    {
+        services.Decorate<TService, TImplementation>();
+        services.AddScoped<ICacheInvalidator>(sp => (ICacheInvalidator)sp.GetRequiredService<TService>());
+        return services;
+    }
 }

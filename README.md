@@ -64,6 +64,9 @@ It also creates an invalidator interface named `<YourInterfaceName>Invalidator`.
 - support for parameter-based cache keys
 - optional method exclusion with `[CacheIgnore]`
 - optional cache tags with `[CacheTag]`
+- optional cache expiration with `[CacheTimeout]`
+- optional local cache expiration with `[CacheLocalTimeout]`
+- optional HybridCache entry flags with `[CacheFlags]`
 
 ## When caching is applied
 
@@ -223,6 +226,27 @@ public interface IOrderQueries
 
 Tags are attached to generated cache entries, and the interface name is also added as a tag to support broad invalidation.
 
+### Example 6: Configure cache expiration and flags
+
+```csharp
+using Microsoft.Extensions.Caching.Hybrid;
+
+[CacheInterface]
+public interface IProductQueries
+{
+    [CacheTimeout(120)]
+    [CacheLocalTimeout(10)]
+    [CacheFlags(HybridCacheEntryFlags.DisableDistributedCache)]
+    Task<IReadOnlyList<Product>> GetFeaturedAsync(CancellationToken ct);
+}
+```
+
+This configures the generated cache entry with:
+
+- a 120-minute overall expiration
+- a 10-minute local cache expiration
+- `HybridCache` entry flags for the cached method
+
 ## Generated members
 
 For this interface:
@@ -263,7 +287,7 @@ The sample shows:
 - Cache keys are built from the full interface name, method name, and argument values.
 - Property members are forwarded to the wrapped implementation.
 - Cancellation tokens are passed through when present.
-- The repository defines `CacheTimeoutAttribute`, but the current generator output does not apply a per-method timeout yet.
+- Per-method cache options are supported through `[CacheTimeout]`, `[CacheLocalTimeout]`, and `[CacheFlags]`.
 
 ## Why use PA.CacheAside?
 

@@ -2,16 +2,22 @@
 
 internal static class TypeNameConstants
 {
-    internal const string CacheInterfaceAttribute = "global::PA.CacheAside.Core.CacheInterfaceAttribute";
-    internal const string CacheIgnoreAttribute = "global::PA.CacheAside.Core.CacheIgnoreAttribute";
-    internal const string CacheTagAttribute = "global::PA.CacheAside.Core.CacheTagAttribute";
-    internal const string CacheTimeoutAttribute = "global::PA.CacheAside.Core.CacheTimeoutAttribute";
-    internal const string CacheInvalidatorInterface = "global::PA.CacheAside.Core.ICacheInvalidator";
-    internal const string CancelationTokenType = "global::System.Threading.CancellationToken";
-    internal const string CancelationTokenNoneValue = "global::System.Threading.CancellationToken.None";
-    internal const string ValueTaskType = "global::System.Threading.Tasks.ValueTask";
-    internal const string TaskType = "global::System.Threading.Tasks.Task";
-    internal const string HybridCacheType = "global::Microsoft.Extensions.Caching.Hybrid.HybridCache";
-    internal const string VoidTypeFullname = "global::System.Void";
+    private const string GlobalPrefix = "global::";
+    private const string CoreNamespace = $"{GlobalPrefix}PA.CacheAside.Core";
+    internal const string CacheInterfaceAttribute = $"{CoreNamespace}.CacheInterfaceAttribute";
+    internal const string CacheIgnoreAttribute = $"{CoreNamespace}.CacheIgnoreAttribute";
+    internal const string CacheTagAttribute = $"{CoreNamespace}.CacheTagAttribute";
+    internal const string CacheTimeoutAttribute = $"{CoreNamespace}.CacheTimeoutAttribute";
+    internal const string CacheLocalTimeoutAttribute = $"{CoreNamespace}.CacheLocalTimeoutAttribute";
+    internal const string CacheFlagsAttribute = $"{CoreNamespace}.CacheFlagsAttribute";
+    internal const string CacheInvalidatorInterface = $"{CoreNamespace}.ICacheInvalidator";
+    internal const string CancelationTokenType = $"{GlobalPrefix}System.Threading.CancellationToken";
+    internal const string CancelationTokenNoneValue = $"{GlobalPrefix}System.Threading.CancellationToken.None";
+    internal const string ValueTaskType = $"{GlobalPrefix}System.Threading.Tasks.ValueTask";
+    internal const string TaskType = $"{GlobalPrefix}System.Threading.Tasks.Task";
+    internal const string HybridCacheType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCache";
+    internal const string HybridCacheEntryOptionsType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions";
+    internal const string HybridCacheEntryFlagsType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryFlags";
+    internal const string VoidTypeFullname = $"{GlobalPrefix}System.Void";
     internal const string VoidTypeSimplename = "void";
 }

@@ -67,6 +67,9 @@ namespace PA.CacheAside.Demo
     public interface IRepository
     {
         [CacheTag("TEST")]
+        [CacheTimeout(120)]
+        [CacheLocalTimeout(10)]
+        [CacheFlags(HybridCacheEntryFlags.DisableDistributedCache)]
         Task<IEnumerable<string>> GetAllAsync(CancellationToken ct);
         Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token);
 
