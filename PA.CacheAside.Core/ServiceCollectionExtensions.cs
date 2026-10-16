@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -7,15 +8,28 @@ namespace PA.CacheAside.Core;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddCacheAside(this IServiceCollection services)
+    public static IHybridCacheBuilder AddCacheAsideAndHybridCache(
+        this IServiceCollection service,
+        Assembly[] assemblies = null)
     {
-        return services.AddCacheAside([Assembly.GetCallingAssembly()]);
+        assemblies = assemblies ?? [Assembly.GetCallingAssembly()];
+        service.AddCacheAside(assemblies);
+        return service.AddHybridCache();
     }
 
-    public static IServiceCollection AddCacheAside(this IServiceCollection services, Assembly[] assemblies)
+    public static IHybridCacheBuilder AddCacheAsideAndHybridCache(
+        this IServiceCollection service, 
+        Action<HybridCacheOptions> setupAction,
+        Assembly[] assemblies = null)
     {
-         
+        assemblies = assemblies ?? [Assembly.GetCallingAssembly()];
+        service.AddCacheAside(assemblies);
+        return service.AddHybridCache(setupAction);
+    }
 
+    public static IServiceCollection AddCacheAside(this IServiceCollection services, Assembly[] assemblies = null)
+    {
+        assemblies = assemblies ?? new[] { Assembly.GetCallingAssembly() };
         foreach (var assembly in assemblies)
         {
             var intefaceTypesWithCacheInterfaceAttribute = assembly.GetTypes()

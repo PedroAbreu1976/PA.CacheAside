@@ -4,11 +4,12 @@
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Scrutor" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.*" />
+		<PackageReference Include="Scrutor" Version="7.*" />
 	</ItemGroup>
 
 </Project>

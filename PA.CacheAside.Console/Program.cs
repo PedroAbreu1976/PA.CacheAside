@@ -8,9 +8,8 @@ var builder = Host.CreateDefaultBuilder();
 
 
 builder.ConfigureServices((hostContext, services) => {
-    services.AddHybridCache();
     services.AddScoped<Demo.IRepository, Demo.Repository>();
-    services.AddCacheAside();
+    services.AddCacheAsideAndHybridCache();
 });
 
 var app = builder.Build();
