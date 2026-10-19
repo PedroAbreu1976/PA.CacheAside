@@ -1,12 +1,10 @@
-﻿using PA.CacheAside.Core;
-using Microsoft.Extensions.Caching.Hybrid;
+﻿using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PA.CacheAside.Core;
 using Demo = PA.CacheAside.Demo;
-using System.Security.Cryptography.X509Certificates;
 
 var builder = Host.CreateDefaultBuilder();
-
 
 builder.ConfigureServices((hostContext, services) => {
     services.AddScoped<Demo.IRepository, Demo.Repository>();

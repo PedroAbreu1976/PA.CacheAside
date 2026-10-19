@@ -4,9 +4,8 @@ using System;
 namespace PA.CacheAside.Core;
 
 [AttributeUsage(AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
-public class CacheInterfaceAttribute(bool withInvalidators = true): Attribute
+public class CacheInterfaceAttribute: Attribute
 {
-    public bool WithInvalidators { get; } = withInvalidators;
 }
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]

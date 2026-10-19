@@ -18,6 +18,9 @@ internal static class TypeNameConstants
     internal const string HybridCacheType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCache";
     internal const string HybridCacheEntryOptionsType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions";
     internal const string HybridCacheEntryFlagsType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryFlags";
+    internal const string HybridCacheOptionsType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.HybridCacheOptions";
+    internal const string IHybridCacheBuilderType = $"{GlobalPrefix}Microsoft.Extensions.Caching.Hybrid.IHybridCacheBuilder";
     internal const string VoidTypeFullname = $"{GlobalPrefix}System.Void";
     internal const string VoidTypeSimplename = "void";
+    internal const string IServiceCollectionType = $"{GlobalPrefix}Microsoft.Extensions.DependencyInjection.IServiceCollection";
 }
