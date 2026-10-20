@@ -22,6 +22,7 @@ public class CacheGenerator : IIncrementalGenerator
 
     private static void Execute(SourceProductionContext context, (Compilation Left, ImmutableArray<InterfaceDeclarationSyntax> Right) tuple)
     {
+        
         var interfaceDefs = tuple.GetCacheEnabledInterfaceDefs();
         foreach (var interfaceDef in interfaceDefs)
         {

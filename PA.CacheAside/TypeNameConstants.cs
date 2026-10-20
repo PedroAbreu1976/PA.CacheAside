@@ -12,6 +12,7 @@ internal static class TypeNameConstants
     internal const string CacheFlagsAttribute = $"{CoreNamespace}.CacheFlagsAttribute";
     internal const string CacheInvalidatorInterface = $"{CoreNamespace}.ICacheInvalidator";
     internal const string CancelationTokenType = $"{GlobalPrefix}System.Threading.CancellationToken";
+    //internal const string NullableCancelationTokenType = $"{GlobalPrefix}System.Threading.CancellationToken?";
     internal const string CancelationTokenNoneValue = $"{GlobalPrefix}System.Threading.CancellationToken.None";
     internal const string ValueTaskType = $"{GlobalPrefix}System.Threading.Tasks.ValueTask";
     internal const string TaskType = $"{GlobalPrefix}System.Threading.Tasks.Task";

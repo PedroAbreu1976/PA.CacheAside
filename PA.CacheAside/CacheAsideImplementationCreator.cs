@@ -112,7 +112,7 @@ internal static class CacheAsideImplementationCreator
         var cacheKey = CreateCacheKey(interfacesFullname, methodDef);
 
         var cancellationTokenParameterName = methodDef.Parameters
-            .FirstOrDefault(p => p.IsCancelationToken())?.Name
+            .FirstOrDefault(p => p.IsNonNullableCancelationToken())?.Name
             ?? TypeNameConstants.CancelationTokenNoneValue;
 
         if (!hasResult)
@@ -235,7 +235,7 @@ internal static class CacheAsideImplementationCreator
             .Where(p => !p.IsCancelationToken())
             .Select(p => p.Definition)
             .ToArray();
-        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct"];
+        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct = default"];
         return new InterfaceMethodWriter
         {
             Name = $"Invalidate{methodDef.Name}",

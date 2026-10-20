@@ -43,7 +43,7 @@ async Task GetItemsAsync(params string[] descriptions)
     Console.WriteLine("===================================");
 
     Console.WriteLine("CACHE: Fetching all items: ");
-    var allItems = await repository.GetAllAsync(CancellationToken.None);
+    var allItems = await repository.GetAllAsync();
     Console.WriteLine($"Result: {string.Join(", ", allItems)}");
     Console.WriteLine("----------------------------------");
 
@@ -68,8 +68,11 @@ namespace PA.CacheAside.Demo
         [CacheTimeout(120)]
         [CacheLocalTimeout(10)]
         [CacheFlags(HybridCacheEntryFlags.DisableDistributedCache)]
-        Task<IEnumerable<string>> GetAllAsync(CancellationToken ct);
-        Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token);
+        Task<IEnumerable<string>> GetAllAsync(CancellationToken? ct = default);
+
+        IEnumerable<string> GetAll();
+
+        Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token = default);
 
         Task Add(string item, CancellationToken ct);
 
@@ -83,19 +86,25 @@ namespace PA.CacheAside.Demo
 
         public Task Add(string item, CancellationToken ct)
         {
+
             _items.Add(item);
             return Task.CompletedTask;
         }
 
-        public Task<IEnumerable<string>> GetAllAsync(CancellationToken ct)
+        public Task<IEnumerable<string>> GetAllAsync(CancellationToken? ct = default)
         {
-            Console.WriteLine("REPOSITORY: Fetching all items: ");
+            System.Console.WriteLine("REPOSITORY: Fetching all items: ");
             return Task.FromResult(_items.AsEnumerable());
+        }
+
+        public IEnumerable<string> GetAll()
+        {
+            return _items.AsEnumerable();
         }
 
         public Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token)
         {
-            Console.WriteLine($"REPOSITORY: Fetching items containing '{text}': ");
+            System.Console.WriteLine($"REPOSITORY: Fetching items containing '{text}': ");
             var items = _items.Where(x => x.Contains(text));
             return Task.FromResult(items);
         }

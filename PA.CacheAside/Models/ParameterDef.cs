@@ -1,5 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Linq;
 
 namespace PA.CacheAside.Models
 {
@@ -15,11 +17,12 @@ namespace PA.CacheAside.Models
                 _ => string.Empty
             };
             Name = symbol.Name;
-            Definition = $"{modifier}{symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {symbol.Name}";
+            
             Call = $"{modifier}{symbol.Name}";
             ValueInterpolation = $"{{{symbol.Name}}}";
             Type = Type.GetType(symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
             TypeFullName = symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            Definition = $"{modifier}{TypeFullName} {symbol.Name}";
         }
 
         public string Name { get; }

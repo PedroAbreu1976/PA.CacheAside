@@ -5,5 +5,5 @@ namespace PA.CacheAside.Core;
 
 public interface ICacheInvalidator
 {
-    Task InvalidateAsync(CancellationToken ct);
+    Task InvalidateAsync(CancellationToken ct = default);
 }
