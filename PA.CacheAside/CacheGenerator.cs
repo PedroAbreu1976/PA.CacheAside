@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PA.CacheAside.Writers;
 using System.Collections.Immutable;
 using System.Linq;
 
@@ -30,5 +31,7 @@ public class CacheGenerator : IIncrementalGenerator
         }
 
         context.CreateCacheAsideExtensions(interfaceDefs);
+
+
     }
 }

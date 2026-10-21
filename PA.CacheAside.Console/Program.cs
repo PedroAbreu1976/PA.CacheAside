@@ -1,37 +1,36 @@
-﻿using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PA.CacheAside.Core;
-using Demo = PA.CacheAside.Demo;
+using Demo = PA.CacheAside.Demo.Aot;
 
 var builder = Host.CreateDefaultBuilder();
 
 builder.ConfigureServices((hostContext, services) => {
+    
     services.AddScoped<Demo.IRepository, Demo.Repository>();
     services.AddCacheAsideAndHybridCache();
+    services.AddAotCacheAsideSerialization(() => Demo.CacheAsideJsonContext.Default);
 });
 
 var app = builder.Build();
 
-var cache = app.Services.GetRequiredService<HybridCache>();
 var repository = app.Services.GetRequiredService<Demo.IRepository>();
-var invalidator = app.Services.GetRequiredService<Demo.IRepositoryInvalidator>();
+var repositoryCacheInvalidator = app.Services.GetRequiredService<Demo.IRepositoryInvalidator>();
 
 await repository.Add("Item 1", CancellationToken.None);
 await repository.Add("Item 2", CancellationToken.None);
-await repository.Add("Hello", CancellationToken.None);
+await repository.Add("Item 3", CancellationToken.None);
 
 await GetItemsAsync("Initial fetch of items (should hit repository):");
 
 await GetItemsAsync("Second fetch of items (should not hit repository)");
 
-await invalidator.InvalidateGetContainingAsync("Item", CancellationToken.None);
-await invalidator.InvalidateGetAllAsync(CancellationToken.None);
+await repositoryCacheInvalidator.InvalidateContainsAsync(new Demo.ContainsRequest { Text = "Item" }, CancellationToken.None);
+await repositoryCacheInvalidator.InvalidateGetAllAsync();
 await GetItemsAsync(
-    "Third fetch after invalidation of GetAllAsync() and GetContainingAsync(\"Item\")",
+    "Third fetch after invalidation of GetAllAsync() and ContainsAsync(\"Item\")",
     "(should hit repository again just for fetching all items and items containing 'Item')");
 
-await invalidator.InvalidateAsync(CancellationToken.None);
+await repositoryCacheInvalidator.InvalidateAsync(CancellationToken.None);
 await GetItemsAsync("Fourth fetch after invalidation of all methods (should hit repository again for all fetches)");
 
 await app.RunAsync();
@@ -44,75 +43,19 @@ async Task GetItemsAsync(params string[] descriptions)
 
     Console.WriteLine("CACHE: Fetching all items: ");
     var allItems = await repository.GetAllAsync();
-    Console.WriteLine($"Result: {string.Join(", ", allItems)}");
+    Console.WriteLine($"Result: {string.Join(", ", allItems.Items)}");
     Console.WriteLine("----------------------------------");
 
-    Console.WriteLine("CACHE: Fetching items containing 'Item': ");
-    var itemsContainingItem = await repository.GetContainingAsync("Item", CancellationToken.None);
-    Console.WriteLine($"Result: {string.Join(", ", itemsContainingItem)}");
+    Console.WriteLine("CACHE: Fetching if any item contains 'Item': ");
+    var itemsContainingItem = await repository.ContainsAsync(new Demo.ContainsRequest { Text = "Item" }, CancellationToken.None);
+    Console.WriteLine($"Result: {itemsContainingItem}");        
+
     Console.WriteLine("----------------------------------");
 
-    Console.WriteLine("CACHE: Fetching items containing 'Hello': ");
-    var itemsContainingHello = await repository.GetContainingAsync("Hello", CancellationToken.None);
-    Console.WriteLine($"Result: {string.Join(", ", itemsContainingHello)}");
+    Console.WriteLine("CACHE: Fetching if any item contains 'Hello': ");
+    var itemsContainingHello = await repository.ContainsAsync(new Demo.ContainsRequest { Text = "Hello" }, CancellationToken.None);
+    Console.WriteLine($"Result: {itemsContainingHello}");
     Console.WriteLine("===================================");
     Console.WriteLine();
 }
 
-namespace PA.CacheAside.Demo
-{
-    [CacheInterface]
-    public interface IRepository
-    {
-        [CacheTag("TEST")]
-        [CacheTimeout(120)]
-        [CacheLocalTimeout(10)]
-        [CacheFlags(HybridCacheEntryFlags.DisableDistributedCache)]
-        Task<IEnumerable<string>> GetAllAsync(CancellationToken? ct = default);
-
-        IEnumerable<string> GetAll();
-
-        Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token = default);
-
-        Task Add(string item, CancellationToken ct);
-
-        [CacheIgnore]
-        Task<string> Remove(string item, CancellationToken token);
-    }
-
-    public class Repository : IRepository
-    {
-        private readonly List<string> _items = new();
-
-        public Task Add(string item, CancellationToken ct)
-        {
-
-            _items.Add(item);
-            return Task.CompletedTask;
-        }
-
-        public Task<IEnumerable<string>> GetAllAsync(CancellationToken? ct = default)
-        {
-            System.Console.WriteLine("REPOSITORY: Fetching all items: ");
-            return Task.FromResult(_items.AsEnumerable());
-        }
-
-        public IEnumerable<string> GetAll()
-        {
-            return _items.AsEnumerable();
-        }
-
-        public Task<IEnumerable<string>> GetContainingAsync(string text, CancellationToken token)
-        {
-            System.Console.WriteLine($"REPOSITORY: Fetching items containing '{text}': ");
-            var items = _items.Where(x => x.Contains(text));
-            return Task.FromResult(items);
-        }
-
-        public Task<string> Remove(string item, CancellationToken token)
-        {
-            _items.Remove(item);
-            return Task.FromResult(item);
-        }
-    }
-}

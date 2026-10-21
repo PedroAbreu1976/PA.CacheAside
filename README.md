@@ -1,7 +1,5 @@
 # PA.CacheAside
 
-[NuGet package](https://www.nuget.org/packages/PA.CacheAside/1.0.0)
-
 PA.CacheAside is a small cache-aside helper for .NET that uses a Roslyn source generator to create cached decorators for your interfaces.
 
 ![NuGet Version](https://img.shields.io/nuget/v/PA.CacheAside)
@@ -280,6 +278,33 @@ The sample shows:
 - second call loading from cache
 - selective invalidation of specific entries
 - full invalidation of all entries for the interface
+
+## Tips
+
+### Make parameter `ToString()` values unique
+
+Parameter values are used to build the cache key. Make sure their `ToString()` implementations produce unique values for distinct values; otherwise, different calls can produce the same cache key and share a cache entry unexpectedly.
+```csharp
+public class ProductId
+{
+    public int Id { get; set; }
+    public override string ToString() => Id.ToString();
+}
+```
+
+### AOT support
+Create a partial class that inherits from `AotCacheAsideJsonContext` and add `[JsonSerializable]` attributes for any types used in cached methods. This ensures that the source generator can produce the necessary serialization code for AOT scenarios.
+```csharp
+[JsonSerializable(typeof(GetAllResponse))]
+[JsonSerializable(typeof(bool))]
+public partial class CacheAsideJsonContext : AotCacheAsideJsonContext
+{
+}
+```
+Register the context in DI:
+```csharp
+services.AddAotCacheAsideSerialization(() => CacheAsideJsonContext.Default);
+```
 
 ## Notes and current behavior
 
