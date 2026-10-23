@@ -23,6 +23,7 @@ namespace PA.CacheAside.Models
             Type = Type.GetType(symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
             TypeFullName = symbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             Definition = $"{modifier}{TypeFullName} {symbol.Name}";
+            
         }
 
         public string Name { get; }

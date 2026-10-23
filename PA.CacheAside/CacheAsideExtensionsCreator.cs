@@ -24,25 +24,21 @@ internal static class CacheAsideExtensionsCreator
                 new ClassWriter {
                     Name = "CacheAsideExtensions",
                     IsStatic = true,
-                    MethodWriters = [
-                        interfaceDefs.CreateAddCacheAsideMethod(),
-                        CreateAddCacheAsideAndHybridCacheWithOptionsMethod(),
-                        CreateAddCacheAsideAndHybridCacheWithoutOptionsMethod()
-                    ]
+                    MethodWriters = [interfaceDefs.CreateAddCacheAsideMethod()]
             }]
         };
 
     private static ClassMethodWriter CreateAddCacheAsideMethod(this IEnumerable<InterfaceDef> interfaceDefs) =>
-        new ClassMethodWriter
-        {
-            Name = "AddCacheAside",
-            ReturnType = TypeNameConstants.IServiceCollectionType,
-            IsStatic = true,
-            Arguments = ["this IServiceCollection services"],
-            Body = $@"
+    new ClassMethodWriter
+    {
+        Name = "AddCacheAside",
+        ReturnType = TypeNameConstants.CacheAsideServiceSetupType,
+        IsStatic = true,
+        Arguments = ["this IServiceCollection services"],
+        Body = $@"
 {interfaceDefs.GetAddCacheAsideMethodBody()}
-        return services;"
-        };
+        return new {TypeNameConstants.CacheAsideServiceSetupType}(services);"
+    };
 
     private static string GetAddCacheAsideMethodBody(this IEnumerable<InterfaceDef> interfaceDefs)=>
         interfaceDefs
@@ -50,28 +46,4 @@ internal static class CacheAsideExtensionsCreator
         services.Decorate<{interfaceDef.FullName}, {interfaceDef.FullName}Cache>();
         services.AddScoped<{interfaceDef.FullName}Invalidator>(sp => ({interfaceDef.FullName}Invalidator)sp.GetRequiredService<{interfaceDef.FullName}> ());")
             .Join("\n");
-
-    private static ClassMethodWriter CreateAddCacheAsideAndHybridCacheWithOptionsMethod() =>
-         new ClassMethodWriter
-         {
-             Name = "AddCacheAsideAndHybridCache",
-             ReturnType = TypeNameConstants.IHybridCacheBuilderType,
-             IsStatic = true,
-             Arguments = ["this IServiceCollection services", $"Action<{TypeNameConstants.HybridCacheOptionsType}> setupAction"],
-             Body = $@"
-        services.AddCacheAside();
-        return services.AddHybridCache(setupAction);"
-         };
-
-    private static ClassMethodWriter CreateAddCacheAsideAndHybridCacheWithoutOptionsMethod() =>
-         new ClassMethodWriter
-         {
-             Name = "AddCacheAsideAndHybridCache",
-             ReturnType = TypeNameConstants.IHybridCacheBuilderType,
-             IsStatic = true,
-             Arguments = ["this IServiceCollection services"],
-             Body = $@"
-        services.AddCacheAside();
-        return services.AddHybridCache();"
-         };
 }

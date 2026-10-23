@@ -24,4 +24,5 @@ internal static class TypeNameConstants
     internal const string VoidTypeFullname = $"{GlobalPrefix}System.Void";
     internal const string VoidTypeSimplename = "void";
     internal const string IServiceCollectionType = $"{GlobalPrefix}Microsoft.Extensions.DependencyInjection.IServiceCollection";
+    internal const string CacheAsideServiceSetupType = $"{GlobalPrefix}Microsoft.Extensions.DependencyInjection.CacheAsideServiceSetup";
 }

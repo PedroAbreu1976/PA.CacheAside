@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
-		<Version>1.0.5</Version>
+		<Version>1.0.6</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -18,7 +18,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.*">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-		<PackageReference Include="PA.CacheAside.Core" Version="1.0.5"/>
+		<PackageReference Include="PA.CacheAside.Core" Version="1.0.6"/>
 	</ItemGroup>
 
 	<ItemGroup>

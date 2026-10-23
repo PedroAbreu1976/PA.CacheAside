@@ -7,8 +7,13 @@ var builder = Host.CreateDefaultBuilder();
 builder.ConfigureServices((hostContext, services) => {
     
     services.AddScoped<Demo.IRepository, Demo.Repository>();
-    services.AddCacheAsideAndHybridCache();
-    services.AddAotCacheAsideSerialization(() => Demo.CacheAsideJsonContext.Default);
+    services.AddCacheAside()
+        .WithHybridCache()
+        .WithAotSerialization(() => Demo.CacheAsideJsonContext.Default)
+        .ConfigureCacheKeyFactory(s =>
+        {
+            s.RegisterCacheKeyProvider<Demo.ContainsRequest>();
+        });
 });
 
 var app = builder.Build();
@@ -46,14 +51,18 @@ async Task GetItemsAsync(params string[] descriptions)
     Console.WriteLine($"Result: {string.Join(", ", allItems.Items)}");
     Console.WriteLine("----------------------------------");
 
+    var request = new Demo.ContainsRequest { Text = "Item" };
     Console.WriteLine("CACHE: Fetching if any item contains 'Item': ");
-    var itemsContainingItem = await repository.ContainsAsync(new Demo.ContainsRequest { Text = "Item" }, CancellationToken.None);
+    Console.WriteLine("Item 1 HasCode: " + request.GetCacheKey());
+    var itemsContainingItem = await repository.ContainsAsync(request, CancellationToken.None);
     Console.WriteLine($"Result: {itemsContainingItem}");        
 
     Console.WriteLine("----------------------------------");
 
+    request = new Demo.ContainsRequest { Text = "Hello" };
     Console.WriteLine("CACHE: Fetching if any item contains 'Hello': ");
-    var itemsContainingHello = await repository.ContainsAsync(new Demo.ContainsRequest { Text = "Hello" }, CancellationToken.None);
+    Console.WriteLine("Hello HasCode: " + request.GetCacheKey());
+    var itemsContainingHello = await repository.ContainsAsync(request, CancellationToken.None);
     Console.WriteLine($"Result: {itemsContainingHello}");
     Console.WriteLine("===================================");
     Console.WriteLine();
