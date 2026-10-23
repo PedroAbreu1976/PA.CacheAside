@@ -55,7 +55,7 @@ It also creates an invalidator interface named `<YourInterfaceName>Invalidator`.
 
 - source-generated cache decorators
 - integration with `Microsoft.Extensions.Caching.Hybrid`
-- automatic DI decoration with `AddCacheAside()`
+- fluent DI registration with `AddCacheAside()`
 - per-method cache invalidation
 - full interface invalidation through `ICacheInvalidator`
 - support for async and sync methods with return values
@@ -137,12 +137,12 @@ public sealed class ProductRepository : IProductRepository
 using Microsoft.Extensions.DependencyInjection;
 using PA.CacheAside.Core;
 
-services.AddHybridCache();
 services.AddScoped<IProductRepository, ProductRepository>();
-services.AddCacheAside();
+services.AddCacheAside()
+    .WithHybridCache();
 ```
 
-`AddCacheAside()` decorates matching services and also registers the generated invalidator interface.
+`AddCacheAside()` decorates matching services, registers the generated invalidator interface, and returns a setup object for configuring the cache. `WithHybridCache()` registers the required `HybridCache` services.
 
 ### 5. Use the interface normally
 
@@ -245,6 +245,70 @@ This configures the generated cache entry with:
 - a 10-minute local cache expiration
 - `HybridCache` entry flags for the cached method
 
+## Generate cache keys for complex parameters
+
+Primitive parameters such as strings, integers, `Guid`, and dates have built-in cache key generators. For complex parameters, register a cache key generator so that the fields that identify the request are represented consistently in the cache key.
+
+### Register a key generator with a delegate
+
+Use `ConfigureCacheKeyFactory` when the key logic is small and local to the service registration:
+
+```csharp
+public sealed record ProductSearch(string Category, int Page);
+
+[CacheInterface]
+public interface IProductQueries
+{
+    Task<IReadOnlyList<Product>> SearchAsync(ProductSearch search, CancellationToken ct);
+}
+
+services.AddScoped<IProductQueries, ProductQueries>();
+services.AddCacheAside()
+    .WithHybridCache()
+    .ConfigureCacheKeyFactory(setup =>
+        setup.RegisterCacheKeyProvider<ProductSearch>(
+            search => $"{search.Category}:{search.Page}"));
+```
+
+Calls with the same category and page reuse the same cache entry. Include every property that distinguishes one request from another in the generated key.
+
+### Implement `ICacheKeyProvider`
+
+For reusable key logic, let the parameter type provide its own key:
+
+```csharp
+public sealed class CustomerSearch : ICacheKeyProvider
+{
+    public string Name { get; init; } = string.Empty;
+    public bool IncludeInactive { get; init; }
+
+    public string GetCacheKey()
+        => $"{Name}:{IncludeInactive}";
+}
+
+services.AddCacheAside()
+    .WithHybridCache()
+    .ConfigureCacheKeyFactory(setup =>
+        setup.RegisterCacheKeyProvider<CustomerSearch>());
+```
+
+The provider is used for both cached calls and generated invalidation methods that accept `CustomerSearch`.
+
+### Discover providers from an assembly
+
+When providers are located in a shared or feature assembly, implement `ICacheKeyProvider` and load all implementations during setup:
+
+```csharp
+services.AddCacheAside()
+    .WithHybridCache()
+    .LoadCacheKeyGeneratorsFromAssemblies(new[]
+    {
+        typeof(CustomerSearch).Assembly
+    });
+```
+
+`LoadCacheKeyGeneratorsFromAssemblies` scans the supplied assemblies for concrete `ICacheKeyProvider` implementations and registers them automatically. Providers should return a deterministic key and should not include values that do not affect the result, such as object references or timestamps.
+
 ## Generated members
 
 For this interface:
@@ -281,14 +345,15 @@ The sample shows:
 
 ## Tips
 
-### Make parameter `ToString()` values unique
+### Make generated cache keys unique
 
-Parameter values are used to build the cache key. Make sure their `ToString()` implementations produce unique values for distinct values; otherwise, different calls can produce the same cache key and share a cache entry unexpectedly.
+Parameter values are used to build the cache key. Primitive parameters use the built-in generators. For complex parameters, prefer registering a provider with `ConfigureCacheKeyFactory` or implementing `ICacheKeyProvider`; make sure the generated key is unique for distinct values that produce different results.
+
 ```csharp
-public class ProductId
+public sealed class ProductId : ICacheKeyProvider
 {
-    public int Id { get; set; }
-    public override string ToString() => Id.ToString();
+    public int Id { get; init; }
+    public string GetCacheKey() => Id.ToString();
 }
 ```
 
@@ -301,9 +366,11 @@ public partial class CacheAsideJsonContext : AotCacheAsideJsonContext
 {
 }
 ```
-Register the context in DI:
+Register the context and the required cache services through the fluent setup API:
 ```csharp
-services.AddAotCacheAsideSerialization(() => CacheAsideJsonContext.Default);
+services.AddCacheAside()
+    .WithHybridCache()
+    .WithAotSerialization(() => CacheAsideJsonContext.Default);
 ```
 
 ## Notes and current behavior
