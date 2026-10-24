@@ -16,6 +16,8 @@ namespace PA.CacheAside.Demo.Aot
 
         Task<bool> ContainsAsync(ContainsRequest request, CancellationToken token = default);
 
+        Task<bool> ContainsAny(IEnumerable<string> items, CancellationToken token = default);
+
         Task Add(string item, CancellationToken ct);
 
         [CacheIgnore]
@@ -63,6 +65,13 @@ namespace PA.CacheAside.Demo.Aot
         {
             _items.Remove(item);
             return Task.FromResult(item);
+        }
+
+        public Task<bool> ContainsAny(IEnumerable<string> items, CancellationToken token = default)
+        {
+            System.Console.WriteLine($"REPOSITORY: Fetching if any item is contained in the provided items: ");
+            var result = _items.Any(x => items.Contains(x));
+            return Task.FromResult(result);
         }
     }
 }

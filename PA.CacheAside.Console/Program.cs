@@ -9,11 +9,12 @@ builder.ConfigureServices((hostContext, services) => {
     services.AddScoped<Demo.IRepository, Demo.Repository>();
     services.AddCacheAside()
         .WithHybridCache()
-        .WithAotSerialization(() => Demo.CacheAsideJsonContext.Default)
-        .ConfigureCacheKeyFactory(s =>
-        {
-            s.RegisterCacheKeyProvider<Demo.ContainsRequest>();
-        });
+        .LoadCacheKeyGeneratorsFromAssemblies(new[] { typeof(Demo.ContainsRequest).Assembly });
+    //.WithAotSerialization(() => Demo.CacheAsideJsonContext.Default)
+    //.ConfigureCacheKeyFactory(s =>
+    //{
+    //    s.RegisterCacheKeyProvider<Demo.ContainsRequest>();
+    //});
 });
 
 var app = builder.Build();
@@ -64,7 +65,15 @@ async Task GetItemsAsync(params string[] descriptions)
     Console.WriteLine("Hello HasCode: " + request.GetCacheKey());
     var itemsContainingHello = await repository.ContainsAsync(request, CancellationToken.None);
     Console.WriteLine($"Result: {itemsContainingHello}");
+
+    Console.WriteLine("----------------------------------");
+
+    var itemsToCheck = new List<string> { "Item 1", "Item 4" };
+    Console.WriteLine("CACHE: Fetching if any item contains \"Item 1\" or \"Item 4\": ");
+    var itemsContaining = await repository.ContainsAny(itemsToCheck, CancellationToken.None);
+    Console.WriteLine($"Result: {itemsContaining}");
     Console.WriteLine("===================================");
     Console.WriteLine();
+
 }
 

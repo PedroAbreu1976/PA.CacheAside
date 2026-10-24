@@ -7,7 +7,7 @@
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>false</IncludeBuildOutput>
-		<Version>1.0.6</Version>
+		<Version>1.1.2</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -18,7 +18,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.*">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-		<PackageReference Include="PA.CacheAside.Core" Version="1.0.6"/>
+		<PackageReference Include="PA.CacheAside.Core" Version="1.1.2" />
 	</ItemGroup>
 
 	<ItemGroup>

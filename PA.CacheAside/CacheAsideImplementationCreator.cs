@@ -62,7 +62,8 @@ internal static class CacheAsideImplementationCreator
             Arguments =
             [
                 $"{interfaceDef.FullName} source",
-            $"{TypeNameConstants.HybridCacheType} cache"
+                $"{TypeNameConstants.HybridCacheType} cache",
+                $"{TypeNameConstants.ICacheKeyFactoryType} cacheKeyFactory"
             ],
             Interfaces =
             [
@@ -251,7 +252,7 @@ internal static class CacheAsideImplementationCreator
     {
         var cacheParameters = methodDef.Parameters
             .Where(p => !p.IsCancelationToken())
-            .Select(x => x.ValueInterpolation)
+            .Select(x => $"{{cacheKeyFactory.GetCacheKey({x.Name})}}")
             .Join(", ");
         return $"{interfaceFullName}.{methodDef.Name}({cacheParameters})";
     }

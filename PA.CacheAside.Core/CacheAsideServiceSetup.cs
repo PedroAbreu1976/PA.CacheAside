@@ -56,7 +56,7 @@ public class CacheAsideServiceSetup : ICacheAsideServiceSetup
         foreach (var type in cacheKeyProviderTypes)
         {
             var method = typeof(CacheKeyFactory)
-                .GetMethod(nameof(CacheKeyFactory.RegisterCacheKeyProvider))?
+                .GetMethod(nameof(CacheKeyFactory.RegisterCacheKeyProvider), [])?
                 .MakeGenericMethod(type);
             method?.Invoke(_cacheKeyFactory, null);
         }
