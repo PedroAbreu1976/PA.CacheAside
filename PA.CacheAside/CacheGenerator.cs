@@ -28,6 +28,7 @@ public class CacheGenerator : IIncrementalGenerator
         foreach (var interfaceDef in interfaceDefs)
         {
             context.CreateCacheAsideImplementation(interfaceDef);
+            context.CreateInvalidators(interfaceDef);
         }
 
         context.CreateCacheAsideExtensions(interfaceDefs);

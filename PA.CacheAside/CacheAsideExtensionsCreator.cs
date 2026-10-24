@@ -44,6 +44,6 @@ internal static class CacheAsideExtensionsCreator
         interfaceDefs
             .Select(interfaceDef => $@"
         services.Decorate<{interfaceDef.FullName}, {interfaceDef.FullName}Cache>();
-        services.AddScoped<{interfaceDef.FullName}Invalidator>(sp => ({interfaceDef.FullName}Invalidator)sp.GetRequiredService<{interfaceDef.FullName}> ());")
+        services.AddScoped<{interfaceDef.FullName}Invalidator, {interfaceDef.FullName}InvalidatorImplementation>();")
             .Join("\n");
 }

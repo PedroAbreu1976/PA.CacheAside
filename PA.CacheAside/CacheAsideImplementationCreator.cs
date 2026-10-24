@@ -11,13 +11,6 @@ namespace PA.CacheAside;
 
 internal static class CacheAsideImplementationCreator
 {
-    internal static IEnumerable<InterfaceDef> GetCacheEnabledInterfaceDefs(this (Compilation Left, ImmutableArray<InterfaceDeclarationSyntax> Right) tuple)
-    {
-        return tuple.Right
-            .Select(x => tuple.Left.GetInterface(x))
-            .Where(x => x.HasAttribute(TypeNameConstants.CacheInterfaceAttribute)); 
-    }
-
     internal static void CreateCacheAsideImplementation(this SourceProductionContext context, InterfaceDef interfaceDef)
     {
         var fileWriter = CreateFileWriter(interfaceDef);
@@ -31,7 +24,6 @@ internal static class CacheAsideImplementationCreator
             TypeWriters =
             [
                 CreateClassWriter(interfaceDef),
-                CreateInvalidatorInterfaceWriter(interfaceDef)
             ]
         };
 
@@ -40,21 +32,9 @@ internal static class CacheAsideImplementationCreator
         var classMethodWriters = interfaceDef.MethodDefs
             .Select(m => CreateClassMethodWriter(m, interfaceDef))
             .ToArray();
-        var invalidatorMethodWriters = interfaceDef.MethodDefs
-            .Where(m => m.HasResult())
-            .Where(m => !IgnoreMethod(m))
-            .Select(m => CreateClassInvalidatorMethodWriter(m, interfaceDef))
-            .ToArray();
-        var generalInvalidatorMethodWriter = CreateClassGeneralInvalidatorMethodWriter(interfaceDef.FullName);
-        ClassMethodWriter[] methodWriters =
-            [
-                .. classMethodWriters,
-            .. invalidatorMethodWriters,
-            generalInvalidatorMethodWriter
-            ];
 
         var propertyWriters = interfaceDef.Properties
-            .Select(p => CreatePropertyWriter(p));
+            .Select(p => p.CreatePropertyWriter());
 
         return new ClassWriter
         {
@@ -65,17 +45,13 @@ internal static class CacheAsideImplementationCreator
                 $"{TypeNameConstants.HybridCacheType} cache",
                 $"{TypeNameConstants.ICacheKeyFactoryType} cacheKeyFactory"
             ],
-            Interfaces =
-            [
-                interfaceDef.FullName,
-            $"{interfaceDef.Name}Invalidator"
-            ],
-            MethodWriters = methodWriters,
+            Interfaces = [interfaceDef.FullName],
+            MethodWriters = classMethodWriters,
             PropertyWriters = propertyWriters
         };
     }
 
-    private static PropertyWriter CreatePropertyWriter(PropertyDef propertyDef)
+    private static PropertyWriter CreatePropertyWriter(this PropertyDef propertyDef)
     {
         return new PropertyWriter
         {
@@ -102,7 +78,7 @@ internal static class CacheAsideImplementationCreator
     {
         var interfacesFullname = interfaceDef.FullName;
         var isAsync = methodDef.ResultIsAsyncOrTaskOrValueTask();
-        var ignore = IgnoreMethod(methodDef);
+        var ignore = CacheCreatorCommon.IgnoreMethod(methodDef);
         var tagsString = GetTagsString();
         var timeoutInMinutes = GetTimeOutInMinutes();
         var localTimeoutInMinutes = GetLocalTimeOutInMinutes();
@@ -110,7 +86,7 @@ internal static class CacheAsideImplementationCreator
         var hasResult = methodDef.HasResult();
         var methodName = methodDef.Name;
         var parametersCall = methodDef.GetParametersCall();
-        var cacheKey = CreateCacheKey(interfacesFullname, methodDef);
+        var cacheKey = methodDef.CreateCacheKey(interfacesFullname);
 
         var cancellationTokenParameterName = methodDef.Parameters
             .FirstOrDefault(p => p.IsNonNullableCancelationToken())?.Name
@@ -182,78 +158,5 @@ internal static class CacheAsideImplementationCreator
             .GetAttributeFirstValue<int?>(TypeNameConstants.CacheLocalTimeoutAttribute);
         int? GetFlags() => methodDef
             .GetAttributeFirstValue<int?>(TypeNameConstants.CacheFlagsAttribute);
-    }
-
-    private static ClassMethodWriter CreateClassInvalidatorMethodWriter(MethodDef methodDef, InterfaceDef interfaceDef)
-    {
-        var cacheKey = CreateCacheKey(interfaceDef.FullName, methodDef);
-        var arguments = methodDef.Parameters
-            .Where(p => !p.IsCancelationToken())
-            .Select(p => p.Definition)
-            .ToArray();
-        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct"];
-
-        return new ClassMethodWriter
-        {
-            Name = $"Invalidate{methodDef.Name}",
-            ReturnType = TypeNameConstants.TaskType,
-            Arguments = arguments,
-            IsAsync = true,
-            Body = $@"
-        System.Diagnostics.Debug.WriteLine($""Invalidating Cache Key:{cacheKey}"");
-        var cacheKey = $""{cacheKey}"";
-        await cache.RemoveAsync(cacheKey, ct);
-        "
-        };
-    }
-
-    private static ClassMethodWriter CreateClassGeneralInvalidatorMethodWriter(string interfaceFullName) =>
-        new ClassMethodWriter
-        {
-            Name = "InvalidateAsync",
-            ReturnType = TypeNameConstants.TaskType,
-            Arguments = [$"{TypeNameConstants.CancelationTokenType} ct"],
-            IsAsync = true,
-            Body = $@"
-        await cache.RemoveByTagAsync(""{interfaceFullName}"", ct);
-        "
-        };
-
-    private static InterfaceWriter CreateInvalidatorInterfaceWriter(InterfaceDef cacheEnabledImplementedInterface) =>
-        new InterfaceWriter
-        {
-            Name = $"{cacheEnabledImplementedInterface.Name}Invalidator",
-            Interfaces = [TypeNameConstants.CacheInvalidatorInterface],
-            MethodWriters = cacheEnabledImplementedInterface.MethodDefs
-                .Where(m => m.HasResult())
-                .Where(m => !IgnoreMethod(m))
-                .Select(m => CreateInvalidatorInterfaceMethodWriter(m))
-        };
-
-    private static InterfaceMethodWriter CreateInvalidatorInterfaceMethodWriter(MethodDef methodDef)
-    {
-        var arguments = methodDef.Parameters
-            .Where(p => !p.IsCancelationToken())
-            .Select(p => p.Definition)
-            .ToArray();
-        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct = default"];
-        return new InterfaceMethodWriter
-        {
-            Name = $"Invalidate{methodDef.Name}",
-            ReturnType = TypeNameConstants.TaskType,
-            Arguments = arguments
-        };
-    }
-
-    private static bool IgnoreMethod(MethodDef methodDef) =>
-        methodDef.GetAttributeFirstValue<bool?>(TypeNameConstants.CacheIgnoreAttribute) ?? false;
-
-    private static string CreateCacheKey(string interfaceFullName, MethodDef methodDef)
-    {
-        var cacheParameters = methodDef.Parameters
-            .Where(p => !p.IsCancelationToken())
-            .Select(x => $"{{cacheKeyFactory.GetCacheKey({x.Name})}}")
-            .Join(", ");
-        return $"{interfaceFullName}.{methodDef.Name}({cacheParameters})";
     }
 }
