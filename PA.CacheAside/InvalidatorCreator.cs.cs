@@ -18,6 +18,7 @@ internal static class InvalidatorCreator
         new FileWriter
         {
             Namespace = interfaceDef.Namespace,
+            Usings = ["PA.CacheAside.Core"],
             TypeWriters =
             [
                 CreateInvalidatorInterfaceWriter(interfaceDef),
@@ -80,9 +81,9 @@ internal static class InvalidatorCreator
             Arguments = arguments,
             IsAsync = true,
             Body = $@"
-        System.Diagnostics.Debug.WriteLine($""Invalidating Cache Key:{cacheKey}"");
         var cacheKey = $""{cacheKey}"";
-        await cache.RemoveAsync(cacheKey, ct);
+        System.Diagnostics.Debug.WriteLine($""Invalidating Cache Key:{{cacheKey}}"");
+        await cache.RemoveAsync(cacheKey.GenerateCompactCacheKey(), ct);
         "
         };
     }

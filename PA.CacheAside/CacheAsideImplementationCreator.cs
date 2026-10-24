@@ -1,10 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using PA.CacheAside.Extensions;
 using PA.CacheAside.Models;
 using PA.CacheAside.Writers;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace PA.CacheAside;
@@ -21,6 +18,7 @@ internal static class CacheAsideImplementationCreator
         new FileWriter
         {
             Namespace = interfaceDef.Namespace,
+            Usings = ["PA.CacheAside.Core"],
             TypeWriters =
             [
                 CreateClassWriter(interfaceDef),
@@ -116,20 +114,20 @@ internal static class CacheAsideImplementationCreator
         return {(isAsync ? "await " : "")}source.{methodName}({parametersCall});";
 
         string GetCacheAsyncBody() => $@"
-        System.Diagnostics.Debug.WriteLine($""Fetching Cache Key:{cacheKey}"");
         var cacheKey = $""{cacheKey}"";
+        System.Diagnostics.Debug.WriteLine($""Fetching Cache Key:{{cacheKey}}"");
         return await cache.GetOrCreateAsync(
-            key: cacheKey,
+            key: cacheKey.GenerateCompactCacheKey(),
             factory: async _ => await source.{methodName}({parametersCall}),
             cancellationToken: {cancellationTokenParameterName},
             options: {GetEntryOptions()},
             tags: [{tagsString}]);";
 
         string GetCacheSyncBody() => $@"
-        System.Diagnostics.Debug.WriteLine($""Fetching Cache Key:{cacheKey}"");
         var cacheKey = $""{cacheKey}"";
+        System.Diagnostics.Debug.WriteLine($""Fetching Cache Key:{{cacheKey}}"");
         return cache.GetOrCreateAsync(
-            key: cacheKey,
+            key: cacheKey.GenerateCompactCacheKey(),
             factory: _ => ValueTask.FromResult(source.{methodName}({parametersCall})),
             cancellationToken: {TypeNameConstants.CancelationTokenNoneValue},
             options: {GetEntryOptions()},
