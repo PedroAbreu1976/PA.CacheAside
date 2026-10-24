@@ -119,7 +119,8 @@ public class GeneratedClassTests
     {
         var source = new RepositoryForCaching();
         var cache = CreateHybridCache();
-        var instance = new IRepositoryForCachingCache(source, cache);
+        var cacheKeyFactory = new CacheKeyFactory();
+        var instance = new IRepositoryForCachingCache(source, cache, cacheKeyFactory);
 
         Assert.NotNull(instance);
 

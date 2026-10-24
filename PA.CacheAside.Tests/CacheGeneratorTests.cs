@@ -191,7 +191,8 @@ public class CacheGeneratorTests
         Assert.NotNull(generatedType);
 
         var cache = CreateHybridCache();
-        var instance = Activator.CreateInstance(generatedType!, source, cache);
+        var cacheKeyFactory = new CacheKeyFactory();
+        var instance = Activator.CreateInstance(generatedType!, source, cache, cacheKeyFactory);
 
         Assert.NotNull(instance);
         return (IRepositoryForCaching)instance!;
