@@ -10,11 +10,6 @@ builder.ConfigureServices((hostContext, services) => {
     services.AddCacheAside()
         .WithHybridCache()
         .LoadCacheKeyGeneratorsFromAssemblies(new[] { typeof(Demo.ContainsRequest).Assembly });
-    //.WithAotSerialization(() => Demo.CacheAsideJsonContext.Default)
-    //.ConfigureCacheKeyFactory(s =>
-    //{
-    //    s.RegisterCacheKeyProvider<Demo.ContainsRequest>();
-    //});
 });
 
 var app = builder.Build();
