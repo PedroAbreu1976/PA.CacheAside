@@ -11,6 +11,7 @@ public class AuthorService(ILoggerService loggerService, IAuthorServiceInvalidat
         loggerService.LogRepositoryCommand(nameof(AuthorService), nameof(AddAsync), author.Id);
         _authors.Add(author);
         await invalidator.InvalidateGetAllAsync();
+        await invalidator.InvalidateSearchAsync();
     }
 
     public Task<IEnumerable<Author>> GetAllAsync(CancellationToken ct = default)
@@ -31,7 +32,7 @@ public class AuthorService(ILoggerService loggerService, IAuthorServiceInvalidat
         _authors.RemoveAll(author => author.Id == id);
         await invalidator.InvalidateGetAllAsync();
         await invalidator.InvalidateGetByIdAsync(id);
-        //await invalidator.InvalidateSearchAsync()
+        await invalidator.InvalidateSearchAsync();
     }
 
     public Task<IEnumerable<Author>> SearchAsync(AuthorSearchParameters parameters, CancellationToken ct = default)
@@ -59,7 +60,7 @@ public class AuthorService(ILoggerService loggerService, IAuthorServiceInvalidat
         return Task.FromResult(results);
     }
 
-    public Task UpdateAsync(Author author, CancellationToken ct = default)
+    public async Task UpdateAsync(Author author, CancellationToken ct = default)
     {
         loggerService.LogRepositoryCommand(nameof(AuthorService), nameof(UpdateAsync), author.Id);
         var index = _authors.FindIndex(a => a.Id == author.Id);
@@ -67,6 +68,8 @@ public class AuthorService(ILoggerService loggerService, IAuthorServiceInvalidat
         {
             _authors[index] = author;
         }
-        return Task.CompletedTask;
+        await invalidator.InvalidateGetAllAsync();
+        await invalidator.InvalidateGetByIdAsync(author.Id);
+        await invalidator.InvalidateSearchAsync();
     }
 }
