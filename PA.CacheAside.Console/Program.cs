@@ -34,6 +34,10 @@ await GetItemsAsync(
 await repositoryCacheInvalidator.InvalidateAsync(CancellationToken.None);
 await GetItemsAsync("Fourth fetch after invalidation of all methods (should hit repository again for all fetches)");
 
+await repositoryCacheInvalidator.InvalidateContainsAsync();
+await GetItemsAsync("Fifth fetch after invalidation of method ContainsAsync (should hit repository only for ContainsAsync)");
+
+
 await app.RunAsync();
 
 async Task GetItemsAsync(params string[] descriptions)

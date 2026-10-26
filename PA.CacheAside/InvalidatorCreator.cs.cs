@@ -2,6 +2,7 @@
 using PA.CacheAside.Extensions;
 using PA.CacheAside.Models;
 using PA.CacheAside.Writers;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PA.CacheAside;
@@ -31,8 +32,7 @@ internal static class InvalidatorCreator
         var invalidatorMethodWriters = interfaceDef.MethodDefs
             .Where(m => m.HasResult())
             .Where(m => !CacheCreatorCommon.IgnoreMethod(m))
-            .Select(m => m.CreateClassInvalidatorMethodWriter())
-            .ToArray();
+            .SelectMany(m => m.CreateClassInvalidatorMethodWriter());
         var generalInvalidatorMethodWriter = interfaceDef.CreateClassGeneralInvalidatorMethodWriter();
         ClassMethodWriter[] methodWriters =
         [
@@ -61,31 +61,55 @@ internal static class InvalidatorCreator
             Arguments = [$"{TypeNameConstants.CancelationTokenType} ct"],
             IsAsync = true,
             Body = $@"
-            await cache.RemoveByTagAsync(""{interfaceDef.FullName}"", ct);
+            await cache.RemoveByTagAsync(""{interfaceDef.FullName}"".GenerateCompactCacheKey(), ct);
             "
         };
 
-    private static ClassMethodWriter CreateClassInvalidatorMethodWriter(this MethodDef methodDef)
+    private static ClassMethodWriter[] CreateClassInvalidatorMethodWriter(this MethodDef methodDef)
     {
         var cacheKey = methodDef.CreateCacheKey();
+        var cacheTag = methodDef.CreateCacheTag();
         var arguments = methodDef.Parameters
             .Where(p => !p.IsCancelationToken())
-            .Select(p => p.Definition)
-            .ToArray();
-        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct"];
+            .Select(p => p.Definition);
 
-        return new ClassMethodWriter
+        ClassMethodWriter[] result = 
+        [
+            new ClassMethodWriter
+            {
+                Name = $"Invalidate{methodDef.Name}",
+                ReturnType = TypeNameConstants.TaskType,
+                Arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct"],
+                IsAsync = true,
+                Body = $@"
+            var cacheKey = $""{cacheKey}"";
+            System.Diagnostics.Debug.WriteLine($""Invalidating Cache Key:{{cacheKey}}"");
+            await cache.RemoveAsync(cacheKey.GenerateCompactCacheKey(), ct);
+            "
+            }
+        ];
+
+        if (arguments.Any())
         {
-            Name = $"Invalidate{methodDef.Name}",
-            ReturnType = TypeNameConstants.TaskType,
-            Arguments = arguments,
-            IsAsync = true,
-            Body = $@"
-        var cacheKey = $""{cacheKey}"";
-        System.Diagnostics.Debug.WriteLine($""Invalidating Cache Key:{{cacheKey}}"");
-        await cache.RemoveAsync(cacheKey.GenerateCompactCacheKey(), ct);
-        "
-        };
+            result =
+            [
+                .. result,
+                new ClassMethodWriter
+                {
+                    Name = $"Invalidate{methodDef.Name}",
+                    ReturnType = TypeNameConstants.TaskType,
+                    Arguments = [$"{TypeNameConstants.CancelationTokenType} ct"],
+                    IsAsync = true,
+                    Body = $@"
+                var cacheTag = $""{cacheTag}"";
+                System.Diagnostics.Debug.WriteLine($""Invalidating Cache Tag:{{cacheTag}}"");
+                await cache.RemoveByTagAsync(cacheTag.GenerateCompactCacheKey(), ct);
+                "
+                }
+            ];
+        }
+
+        return result;
     }
 
     private static InterfaceWriter CreateInvalidatorInterfaceWriter(this InterfaceDef cacheEnabledImplementedInterface) =>
@@ -96,21 +120,40 @@ internal static class InvalidatorCreator
         MethodWriters = cacheEnabledImplementedInterface.MethodDefs
             .Where(m => m.HasResult())
             .Where(m => !m.IgnoreMethod())
-            .Select(m => m.CreateInvalidatorInterfaceMethodWriter())
+            .SelectMany(m => m.CreateInvalidatorInterfaceMethodWriter())
     };
 
-    private static InterfaceMethodWriter CreateInvalidatorInterfaceMethodWriter(this MethodDef methodDef)
+    private static IEnumerable<InterfaceMethodWriter> CreateInvalidatorInterfaceMethodWriter(this MethodDef methodDef)
     {
         var arguments = methodDef.Parameters
             .Where(p => !p.IsCancelationToken())
-            .Select(p => p.Definition)
-            .ToArray();
-        arguments = [.. arguments, $"{TypeNameConstants.CancelationTokenType} ct = default"];
-        return new InterfaceMethodWriter
+            .Select(p => p.Definition);
+        InterfaceMethodWriter[] result =
+        [
+            new InterfaceMethodWriter
+            {
+                Name = $"Invalidate{methodDef.Name}",
+                ReturnType = TypeNameConstants.TaskType,
+                Arguments = 
+                [
+                    .. arguments, 
+                    $"{TypeNameConstants.CancelationTokenType} ct = default"
+                ]
+            }
+        ];
+        if (arguments.Any())
         {
-            Name = $"Invalidate{methodDef.Name}",
-            ReturnType = TypeNameConstants.TaskType,
-            Arguments = arguments
-        };
+            result =
+            [
+                .. result,
+                new InterfaceMethodWriter
+                {
+                    Name = $"Invalidate{methodDef.Name}",
+                    ReturnType = TypeNameConstants.TaskType,
+                    Arguments = [$"{TypeNameConstants.CancelationTokenType} ct = default"]
+                }
+            ];
+        }
+        return result;
     }
 }

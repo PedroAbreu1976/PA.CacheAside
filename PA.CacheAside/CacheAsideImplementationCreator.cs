@@ -141,14 +141,16 @@ internal static class CacheAsideImplementationCreator
 
         string GetTagsString()
         {
-            var tagArray = methodDef.GetAttributeFirstValueArray<string>(TypeNameConstants.CacheTagAttribute);
+            var tagArray = methodDef
+                .GetAttributeFirstValueArray<string>(TypeNameConstants.CacheTagAttribute)
+                .Select(x=> $"\"{x}\"");
             tagArray = 
             [
                 .. tagArray, 
-                interfacesFullname,
-                methodDef.CreateCacheTag()
+                $"@\"{interfacesFullname}\".GenerateCompactCacheKey()",
+                $"@\"{methodDef.CreateCacheTag()}\".GenerateCompactCacheKey()"
             ];
-            return $"\"{tagArray.Join("\", \"")}\"";
+            return $"{tagArray.Join(", ")}";
         }
 
         int? GetTimeOutInMinutes() => methodDef
