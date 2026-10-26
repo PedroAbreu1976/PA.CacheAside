@@ -21,12 +21,15 @@ internal static class CacheCreatorCommon
     internal static bool IgnoreMethod(this MethodDef methodDef) =>
         methodDef.GetAttributeFirstValue<bool?>(TypeNameConstants.CacheIgnoreAttribute) ?? false;
 
-    internal static string CreateCacheKey(this MethodDef methodDef, string interfaceFullName)
+    internal static string CreateCacheKey(this MethodDef methodDef)
     {
         var cacheParameters = methodDef.Parameters
             .Where(p => !p.IsCancelationToken())
             .Select(x => $"{{cacheKeyFactory.GetCacheKey({x.Name})}}")
             .Join(", ");
-        return $"{interfaceFullName}.{methodDef.Name}({cacheParameters})";
+        return $"{methodDef.ParentTypeDef.FullName}.{methodDef.Name}({cacheParameters})";
     }
+
+    internal static string CreateCacheTag(this MethodDef methodDef) =>
+        $"{methodDef.ParentTypeDef.FullName}.{methodDef.Name}";
 }

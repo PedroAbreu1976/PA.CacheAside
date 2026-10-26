@@ -2,15 +2,15 @@
 
 namespace Demo.Services;
 
-public class AuthorService(ILoggerService loggerService) : IAuthorService
+public class AuthorService(ILoggerService loggerService, IAuthorServiceInvalidator invalidator) : IAuthorService
 {
     private readonly List<Author> _authors = new();
 
-    public Task AddAsync(Author author, CancellationToken ct = default)
+    public async Task AddAsync(Author author, CancellationToken ct = default)
     {
         loggerService.LogRepositoryCommand(nameof(AuthorService), nameof(AddAsync), author.Id);
         _authors.Add(author);
-        return Task.CompletedTask;
+        await invalidator.InvalidateGetAllAsync();
     }
 
     public Task<IEnumerable<Author>> GetAllAsync(CancellationToken ct = default)
@@ -25,11 +25,13 @@ public class AuthorService(ILoggerService loggerService) : IAuthorService
         return Task.FromResult(_authors.First(author => author.Id == id));
     }
 
-    public Task RemoveAsync(int id, CancellationToken ct = default)
+    public async Task RemoveAsync(int id, CancellationToken ct = default)
     {
         loggerService.LogRepositoryCommand(nameof(AuthorService), nameof(RemoveAsync), id);
         _authors.RemoveAll(author => author.Id == id);
-        return Task.CompletedTask;
+        await invalidator.InvalidateGetAllAsync();
+        await invalidator.InvalidateGetByIdAsync(id);
+        //await invalidator.InvalidateSearchAsync()
     }
 
     public Task<IEnumerable<Author>> SearchAsync(AuthorSearchParameters parameters, CancellationToken ct = default)

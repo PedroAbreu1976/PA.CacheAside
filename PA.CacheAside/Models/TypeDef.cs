@@ -16,7 +16,7 @@ namespace PA.CacheAside.Models
             MethodDefs = symbol.GetMembers()
                     .OfType<IMethodSymbol>()
                     .Where(m => m.MethodKind == MethodKind.Ordinary)
-                    .Select(m => new MethodDef(m));
+                    .Select(m => new MethodDef(this, m));
             Properties = symbol.GetMembers()
                     .OfType<IPropertySymbol>()
                     .Select(p => new PropertyDef(p));

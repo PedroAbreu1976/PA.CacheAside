@@ -7,7 +7,7 @@ namespace PA.CacheAside.Models
 {
     internal record MethodDef
     {
-        public MethodDef(IMethodSymbol symbol)
+        public MethodDef(TypeDef parentTypeDef, IMethodSymbol symbol)
         {
             if (symbol == null) throw new ArgumentNullException(nameof(symbol));
             Name = symbol.Name;
@@ -16,8 +16,10 @@ namespace PA.CacheAside.Models
             Parameters = symbol.Parameters.Select(x=> new ParameterDef(x));
             IsAsync = symbol.IsAsync;
             Attributes = symbol.GetAttributes().Select(x => new AttributeDef(x));
+            ParentTypeDef = parentTypeDef;
         }
 
+        public TypeDef ParentTypeDef { get; }
         public string Name { get; }
         public Type ReturnType { get; }
         public string ReturnTypeFullName { get; }

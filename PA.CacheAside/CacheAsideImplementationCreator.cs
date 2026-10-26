@@ -10,25 +10,22 @@ internal static class CacheAsideImplementationCreator
 {
     internal static void CreateCacheAsideImplementation(this SourceProductionContext context, InterfaceDef interfaceDef)
     {
-        var fileWriter = CreateFileWriter(interfaceDef);
+        var fileWriter = interfaceDef.CreateFileWriter();
         context.AddSource($"{interfaceDef.Name}Cache.g.cs", fileWriter.ToString());
     }
 
-    private static FileWriter CreateFileWriter(InterfaceDef interfaceDef) =>
+    private static FileWriter CreateFileWriter(this InterfaceDef interfaceDef) =>
         new FileWriter
         {
             Namespace = interfaceDef.Namespace,
             Usings = ["PA.CacheAside.Core"],
-            TypeWriters =
-            [
-                CreateClassWriter(interfaceDef),
-            ]
+            TypeWriters = [interfaceDef.CreateClassWriter()]
         };
 
-    private static ClassWriter CreateClassWriter(InterfaceDef interfaceDef)
+    private static ClassWriter CreateClassWriter(this InterfaceDef interfaceDef)
     {
         var classMethodWriters = interfaceDef.MethodDefs
-            .Select(m => CreateClassMethodWriter(m, interfaceDef))
+            .Select(m => m.CreateClassMethodWriter())
             .ToArray();
 
         var propertyWriters = interfaceDef.Properties
@@ -62,29 +59,28 @@ internal static class CacheAsideImplementationCreator
         };
     }
 
-    private static ClassMethodWriter CreateClassMethodWriter(MethodDef methodDef, InterfaceDef interfaceDef) =>
+    private static ClassMethodWriter CreateClassMethodWriter(this MethodDef methodDef) =>
         new ClassMethodWriter
         {
             Name = methodDef.Name,
             ReturnType = methodDef.ReturnTypeFullName,
             Arguments = methodDef.Parameters.Select(x => x.Definition),
             IsAsync = methodDef.ResultIsAsyncOrTaskOrValueTask(),
-            Body = GetBody(methodDef, interfaceDef)
+            Body = methodDef.GetBody()
         };
 
-    private static string GetBody(MethodDef methodDef, InterfaceDef interfaceDef)
+    private static string GetBody(this MethodDef methodDef)
     {
-        var interfacesFullname = interfaceDef.FullName;
+        var interfacesFullname = methodDef.ParentTypeDef.FullName;
         var isAsync = methodDef.ResultIsAsyncOrTaskOrValueTask();
         var ignore = CacheCreatorCommon.IgnoreMethod(methodDef);
-        var tagsString = GetTagsString();
         var timeoutInMinutes = GetTimeOutInMinutes();
         var localTimeoutInMinutes = GetLocalTimeOutInMinutes();
         var flags = GetFlags();
         var hasResult = methodDef.HasResult();
         var methodName = methodDef.Name;
         var parametersCall = methodDef.GetParametersCall();
-        var cacheKey = methodDef.CreateCacheKey(interfacesFullname);
+        var cacheKey = methodDef.CreateCacheKey();
 
         var cancellationTokenParameterName = methodDef.Parameters
             .FirstOrDefault(p => p.IsNonNullableCancelationToken())?.Name
@@ -121,7 +117,7 @@ internal static class CacheAsideImplementationCreator
             factory: async _ => await source.{methodName}({parametersCall}),
             cancellationToken: {cancellationTokenParameterName},
             options: {GetEntryOptions()},
-            tags: [{tagsString}]);";
+            tags: [{GetTagsString()}]);";
 
         string GetCacheSyncBody() => $@"
         var cacheKey = $""{cacheKey}"";
@@ -131,7 +127,7 @@ internal static class CacheAsideImplementationCreator
             factory: _ => ValueTask.FromResult(source.{methodName}({parametersCall})),
             cancellationToken: {TypeNameConstants.CancelationTokenNoneValue},
             options: {GetEntryOptions()},
-            tags: [{tagsString}]).Result;";
+            tags: [{GetTagsString()}]).Result;";
 
         string GetEntryOptions() =>
             $@"new {TypeNameConstants.HybridCacheEntryOptionsType}
@@ -146,7 +142,12 @@ internal static class CacheAsideImplementationCreator
         string GetTagsString()
         {
             var tagArray = methodDef.GetAttributeFirstValueArray<string>(TypeNameConstants.CacheTagAttribute);
-            tagArray = [.. tagArray, interfacesFullname];
+            tagArray = 
+            [
+                .. tagArray, 
+                interfacesFullname,
+                methodDef.CreateCacheTag()
+            ];
             return $"\"{tagArray.Join("\", \"")}\"";
         }
 
